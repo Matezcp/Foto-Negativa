@@ -150,8 +150,8 @@ int readData(FILE *arquivo,Header *cabecalho,palheta *novasCores,palheta *cores,
 				}
 			}
 			if(flag == -1){
-				novasCores[numCores-1] = nova;
-				novaMatriz[i][j] = numCores-1;
+				novasCores[numCores] = nova;
+				novaMatriz[i][j] = numCores;
 				numCores++;
 			}
 			else{
@@ -186,12 +186,15 @@ int main(){
     Header *cabecalho;
     palheta cores[256];
     palheta novasCores[256];
+    char imagem[50];
 
     int **matriz;
     int **novaMatriz;
     int i,j,k,l;
     
-    origem = fopen("teste.bmp","rb");
+    scanf("%s",imagem);
+    
+    origem = fopen(imagem,"rb");
     destino = fopen("final.bmp","wb");
     
     initializeVector255bytes(cores);
@@ -235,6 +238,6 @@ int main(){
 			}
 		}
 	}
-
+	
 	return 0;
 }
