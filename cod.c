@@ -168,6 +168,25 @@ int readData(FILE *arquivo,Header *cabecalho,palheta *novasCores,palheta *cores,
 	return numCores;
 }
 
+void imprimeMatriz(int **matriz,Header *cabecalho,int numPadding){
+	int i,j,k;
+	
+	for(i=0;i<cabecalho->altura;i++){
+		for(j =0;j<cabecalho->largura;j++){
+			printf("%d ",matriz[i][j]);
+			if(j == cabecalho->largura -1){
+				for(k=0;k<numPadding;k++){
+					printf("$");
+					if(k == numPadding -1)
+						printf("\n");
+					else
+						printf(" ");
+				}
+			}
+		}
+	}
+}
+
 void writePalheta(palheta *novasCores,FILE *arquivo){
 	int i;
 	
@@ -207,7 +226,7 @@ int main(){
 	
 	readPalheta(cores,origem);
  	
- 	showHeader(cabecalho);
+ 	//showHeader(cabecalho);
 
 	int numPadding = calculaPadding(cabecalho);
 
@@ -221,11 +240,13 @@ int main(){
 		cabecalho->allImportants = numCores;
 	}
 	
+	imprimeMatriz(matriz,cabecalho,numPadding);
+	
 	writeHeader(destino,cabecalho);
 	
 	writePalheta(novasCores,destino);
 	
-	showHeader(cabecalho);
+	//showHeader(cabecalho);
 
 	char lixo = '$';
 	for(i=cabecalho->altura-1;i>=0;i--){
