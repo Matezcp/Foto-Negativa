@@ -80,6 +80,15 @@ void readPalheta(palheta cores[255],FILE *arquivo){
 	}
 }
 
+void invertPalheta(palheta *cores,palheta *novasCores){
+	int i;
+	for(i=0;i<256;i++){
+		novasCores[i].blue = 255 - cores[i].blue;
+		novasCores[i].red = 255 - cores[i].red;
+		novasCores[i].green = 255 - cores[i].green;
+	}
+}
+
 void initializeVector255bytes(palheta *vector){
 	int i;
 	for(i=0;i<256;i++){
@@ -104,13 +113,12 @@ int **allocateMatrix(int altura,int largura){
 }
 
 void showHeader(Header *cabecalho){
-	printf("------------------------------------------------------------------\n");
 	printf("Iniciais:%s\n", cabecalho->inicial);
 	printf("Size of the BMP file:%d\n", cabecalho->size_bmpfile);
 	printf("DEVE SER 0: %d\n", cabecalho->reservado);
-	printf("Especifica o deslocamento, em bytes, para o início da área de dados: %d\n",cabecalho->BfOffSetBits);
+	printf("Especifica o deslocamento, em bytes, para o inicio da area de dados: %d\n",cabecalho->BfOffSetBits);
 	printf("Tamanho em bytes do segundo cabecalho: %d\n",cabecalho->tamOutroCacabecalho);
-	printf("A imagem eh %d x %d\n",cabecalho->largura,cabecalho->altura);
+	printf("Resolucao: %d x %d\n",cabecalho->largura,cabecalho->altura);
 	printf("DEVE SER 1: %d\n",cabecalho->numPlanos);
 	printf("Bytes por pixel: %d\n",cabecalho->bytesPorPixel);
 	printf("Compressao usada: %d\n",cabecalho->compreensao); 
@@ -119,7 +127,6 @@ void showHeader(Header *cabecalho){
 	printf("Resolucao Vertical: %d pixel por metro\n",cabecalho->resoVerticalPixelPorMetro);
 	printf("Numero de cores usadas: %d\n",cabecalho->numCoresUsadas);
 	printf("Numero de cores importantes: %d\n",cabecalho->allImportants);
-	printf("------------------------------------------------------------------\n");
 }
 
 int calculaPadding(Header *cabecalho){
@@ -129,34 +136,13 @@ int calculaPadding(Header *cabecalho){
 	return 0;
 }
 
-int readData(FILE *arquivo,Header *cabecalho,palheta *novasCores,palheta *cores,int **matriz,int **novaMatriz,int numPadding){
+void readData(FILE *arquivo,Header *cabecalho,int **matriz,int numPadding){
 	int i,j,k;
-	int numCores = 0;
 	
 	char a;
 	for(i=cabecalho->altura-1;i>=0;i--){
 		for(j=0;j<cabecalho->largura;j++){
-			int flag = -1;
 			fread(&matriz[i][j],1,1,arquivo);
-			palheta nova;
-			nova.blue = 255 - cores[matriz[i][j]].blue;
-			nova.green = 255 - cores[matriz[i][j]].green;
-			nova.red = 255 - cores[matriz[i][j]].red;
-			nova.reservado = 0;
-			for(k=0;k<numCores;k++){
-				if(novasCores[k].blue == nova.blue && novasCores[k].green == nova.green && novasCores[k].red == nova.red){
-					flag = k;
-					break;
-				}
-			}
-			if(flag == -1){
-				novasCores[numCores] = nova;
-				novaMatriz[i][j] = numCores;
-				numCores++;
-			}
-			else{
-				novaMatriz[i][j] = flag;
-			}
 		}
 		if(numPadding != 0){
 			for(k=0;k<numPadding;k++){
@@ -165,7 +151,6 @@ int readData(FILE *arquivo,Header *cabecalho,palheta *novasCores,palheta *cores,
 		}
 	}
 	
-	return numCores;
 }
 
 void imprimeMatriz(int **matriz,Header *cabecalho,int numPadding){
@@ -225,22 +210,16 @@ int main(){
 	novaMatriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
 	
 	readPalheta(cores,origem);
+	
+	invertPalheta(cores,novasCores);
  	
- 	//showHeader(cabecalho);
+ 	showHeader(cabecalho);
 
 	int numPadding = calculaPadding(cabecalho);
 
-	int numCores = readData(origem,cabecalho,novasCores,cores,matriz,novaMatriz,numPadding);
+	readData(origem,cabecalho,matriz,numPadding);
 	
-	cabecalho->numCoresUsadas = 0;
-	if(numCores == 256){
-		cabecalho->allImportants = 0;
-	}
-	else{
-		cabecalho->allImportants = numCores;
-	}
-	
-	imprimeMatriz(matriz,cabecalho,numPadding);
+	//imprimeMatriz(matriz,cabecalho,numPadding);
 	
 	writeHeader(destino,cabecalho);
 	
@@ -251,7 +230,7 @@ int main(){
 	char lixo = '$';
 	for(i=cabecalho->altura-1;i>=0;i--){
 		for(j=0;j<cabecalho->largura;j++){
-			fwrite(&novaMatriz[i][j],1,1,destino);
+			fwrite(&matriz[i][j],1,1,destino);
 		}
 		if(numPadding != 0){
 			for(k=0;k<numPadding;k++){
