@@ -1,0 +1,18 @@
+ERROS: 
+1- Não existir o arquivo    *
+2 - Onde deve ser 1 estar outra coisa
+3 - Onde deve ser 0 estar outra coisa
+4- As iniciais estarem erradas
+
+Ideia: Fazer foto negativa ou preto e branco (escolha no programa) *
+Se for foto negativa o nome do novo arquivo deve ser arquivoNegativo.bmp *
+Se for preto e branco o nome do novo arquivo deve ser arquivoPretoBranco.bmp *
+
+Dever ser exibido:
+Cabecalho do arquivo
+Palheta lida
+Palheta nova
+Soma dos valores de cada linha, sendo que o lixo '$' vale -1 na soma;
+
+ou 
+Erro

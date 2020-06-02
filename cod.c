@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-//Neastrest neighbor para n�o alterar a palheta de cores
+//Neastrest neighbor para n�o alterar a palheta de cores
 
 /* Struct que descreve o cabecalho do arquivo BMP */
 typedef struct header
@@ -89,6 +90,15 @@ void invertPalheta(palheta *cores,palheta *novasCores){
 	}
 }
 
+void cinzaPalheta(palheta *cores,palheta *novasCores){
+	int i,media;
+	for(i=0;i<256;i++){
+		media = (cores[i].green+cores[i].blue+cores[i].red)/3;
+        novasCores[i].blue = novasCores[i].red = novasCores[i].green = media;
+	}
+
+}
+
 void initializeVector255bytes(palheta *vector){
 	int i;
 	for(i=0;i<256;i++){
@@ -113,10 +123,11 @@ int **allocateMatrix(int altura,int largura){
 }
 
 void showHeader(Header *cabecalho){
+	printf("CABECALHO:\n");
 	printf("Iniciais:%s\n", cabecalho->inicial);
-	printf("Size of the BMP file:%d\n", cabecalho->size_bmpfile);
+	printf("Tamanho do arquivo:%d\n", cabecalho->size_bmpfile);
 	printf("DEVE SER 0: %d\n", cabecalho->reservado);
-	printf("Especifica o deslocamento, em bytes, para o inicio da area de dados: %d\n",cabecalho->BfOffSetBits);
+	printf("Deslocamento, em bytes, para o inicio da area de dados: %d\n",cabecalho->BfOffSetBits);
 	printf("Tamanho em bytes do segundo cabecalho: %d\n",cabecalho->tamOutroCacabecalho);
 	printf("Resolucao: %d x %d\n",cabecalho->largura,cabecalho->altura);
 	printf("DEVE SER 1: %d\n",cabecalho->numPlanos);
@@ -127,6 +138,14 @@ void showHeader(Header *cabecalho){
 	printf("Resolucao Vertical: %d pixel por metro\n",cabecalho->resoVerticalPixelPorMetro);
 	printf("Numero de cores usadas: %d\n",cabecalho->numCoresUsadas);
 	printf("Numero de cores importantes: %d\n",cabecalho->allImportants);
+}
+
+void imprimePalheta(palheta *cores){
+	int i;
+	for(i=0;i<256;i++){
+		printf("Palheta[%d]: R:%d G:%d B:%d\n",i,cores[i].red,cores[i].green,cores[i].blue);
+	}
+
 }
 
 int calculaPadding(Header *cabecalho){
@@ -184,60 +203,136 @@ void writePalheta(palheta *novasCores,FILE *arquivo){
 	
 }
 
+char *formarNomeNovoArquivo(int isNeg,char *nome){
+	char *final;
+
+	char negativo[] = "Negativo.bmp";
+	char pretoBranco[] = "PretoBranco.bmp";
+
+	if(isNeg){
+		final = (char *) malloc(strlen(negativo)+(strlen(nome)-3));
+		strncpy(final,nome,strlen(nome)-4);
+		final = strcat(final,negativo);
+		final[strlen(negativo)+(strlen(nome)-3)-1] = 0;
+	}
+	else{
+		final = (char *) malloc(strlen(pretoBranco)+(strlen(nome)-3));
+		strncpy(final,nome,strlen(nome)-4);
+		final = strcat(final,pretoBranco);
+		final[strlen(pretoBranco)+(strlen(nome)-3)-1] = 0;
+	}
+
+	return final;
+}
+
 int main(){
     FILE *origem;
     FILE *destino;
     Header *cabecalho;
     palheta cores[256];
     palheta novasCores[256];
-    char imagem[50];
+    char *imagem;
+	char *imagemFinal;
+	long long int *soma;
 
     int **matriz;
     int **novaMatriz;
     int i,j,k,l;
+	int op;
     
-    scanf("%s",imagem);
+    scanf("%m[^\n\r]",&imagem);
     
+	scanf("%d",&op);
+
     origem = fopen(imagem,"rb");
-    destino = fopen("final.bmp","wb");
+
+	if(origem == NULL){
+		printf("Erro no arquivo\n");
+		free(imagem);
+		return 0;
+	}
     
     initializeVector255bytes(cores);
     initializeVector255bytes(novasCores);
 
 	cabecalho = readHeader(origem);
+
+	if(cabecalho->reservado != 0 || cabecalho->numPlanos != 1){
+		printf("Erro no arquivo\n");
+		fclose(origem);
+		free(imagem);
+		free(cabecalho);
+		return 0;
+	}
+	if(cabecalho->inicial[0]!='B' || cabecalho->inicial[1] != 'M'){
+		printf("Arquivo não é do formato BMP\n");
+		fclose(origem);
+		free(imagem);
+		free(cabecalho);
+		return 0;
+	}
 	
+	soma = (long long int *) calloc(cabecalho->altura,sizeof(long long int));
+
 	matriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
 	novaMatriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
 	
 	readPalheta(cores,origem);
 	
-	invertPalheta(cores,novasCores);
+	switch(op){
+		//Foto Negativa
+		case 1: 
+			imagemFinal = formarNomeNovoArquivo(1,imagem);
+			invertPalheta(cores,novasCores);
+			break;
+		//Preta e Branca
+		case 2:
+			imagemFinal = formarNomeNovoArquivo(0,imagem);
+			cinzaPalheta(cores,novasCores);
+			break;
+
+		default:
+			break;
+	}
  	
  	showHeader(cabecalho);
 
+	printf("PALHETA ORIGINAL:\n");
+	imprimePalheta(cores);
+	printf("PALHETA NOVA:\n");
+	imprimePalheta(novasCores);
+
 	int numPadding = calculaPadding(cabecalho);
+
+	destino = fopen(imagemFinal,"wb");
 
 	readData(origem,cabecalho,matriz,numPadding);
 	
 	//imprimeMatriz(matriz,cabecalho,numPadding);
-	
 	writeHeader(destino,cabecalho);
 	
 	writePalheta(novasCores,destino);
 	
 	//showHeader(cabecalho);
 
+	//Escreve
 	char lixo = '$';
 	for(i=cabecalho->altura-1;i>=0;i--){
 		for(j=0;j<cabecalho->largura;j++){
+			soma[i] += matriz[i][j];
 			fwrite(&matriz[i][j],1,1,destino);
 		}
 		if(numPadding != 0){
 			for(k=0;k<numPadding;k++){
 				fwrite(&lixo,1,1,destino);
+				soma[i]--;
 			}
 		}
 	}
-	
+
+	for(i=0;i<cabecalho->altura;i++){
+		printf("Soma linha %d: %lld\n",i,soma[i]);
+	}
+
 	return 0;
 }
