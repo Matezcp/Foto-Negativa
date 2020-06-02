@@ -124,14 +124,14 @@ int **allocateMatrix(int altura,int largura){
 
 void showHeader(Header *cabecalho){
 	printf("CABECALHO:\n");
-	printf("Iniciais:%s\n", cabecalho->inicial);
-	printf("Tamanho do arquivo:%d\n", cabecalho->size_bmpfile);
-	printf("DEVE SER 0: %d\n", cabecalho->reservado);
+	printf("Iniciais: %s\n", cabecalho->inicial);
+	printf("Tamanho do arquivo: %d\n", cabecalho->size_bmpfile);
+	printf("Reservado: %d\n", cabecalho->reservado);
 	printf("Deslocamento, em bytes, para o inicio da area de dados: %d\n",cabecalho->BfOffSetBits);
 	printf("Tamanho em bytes do segundo cabecalho: %d\n",cabecalho->tamOutroCacabecalho);
 	printf("Resolucao: %d x %d\n",cabecalho->largura,cabecalho->altura);
-	printf("DEVE SER 1: %d\n",cabecalho->numPlanos);
-	printf("Bytes por pixel: %d\n",cabecalho->bytesPorPixel);
+	printf("Numero  de planos: %d\n",cabecalho->numPlanos);
+	printf("Bits por pixel: %d\n",cabecalho->bytesPorPixel);
 	printf("Compressao usada: %d\n",cabecalho->compreensao); 
 	printf("Tamanho imagem: %d\n",cabecalho->BiSizeImag);
 	printf("Resolucao horizontal: %d pixel por metro\n",cabecalho->resoHorizontalPixelPorMetro);
@@ -143,7 +143,7 @@ void showHeader(Header *cabecalho){
 void imprimePalheta(palheta *cores){
 	int i;
 	for(i=0;i<256;i++){
-		printf("Palheta[%d]: R:%d G:%d B:%d\n",i,cores[i].red,cores[i].green,cores[i].blue);
+		printf("Paleta[%d]: R:%d G:%d B:%d\n",i,cores[i].red,cores[i].green,cores[i].blue);
 	}
 
 }
@@ -257,15 +257,16 @@ int main(){
 
 	cabecalho = readHeader(origem);
 
-	if(cabecalho->reservado != 0 || cabecalho->numPlanos != 1){
-		printf("Erro no arquivo\n");
+	if(cabecalho->inicial[0]!='B' || cabecalho->inicial[1] != 'M'){
+		printf("Arquivo não é do formato BMP\n");
 		fclose(origem);
 		free(imagem);
 		free(cabecalho);
 		return 0;
 	}
-	if(cabecalho->inicial[0]!='B' || cabecalho->inicial[1] != 'M'){
-		printf("Arquivo não é do formato BMP\n");
+
+	if(cabecalho->reservado != 0 || cabecalho->numPlanos != 1){
+		printf("Erro no arquivo\n");
 		fclose(origem);
 		free(imagem);
 		free(cabecalho);
@@ -297,9 +298,9 @@ int main(){
  	
  	showHeader(cabecalho);
 
-	printf("PALHETA ORIGINAL:\n");
+	printf("PALETA ORIGINAL:\n");
 	imprimePalheta(cores);
-	printf("PALHETA NOVA:\n");
+	printf("PALETA NOVA:\n");
 	imprimePalheta(novasCores);
 
 	int numPadding = calculaPadding(cabecalho);
@@ -333,6 +334,11 @@ int main(){
 	for(i=0;i<cabecalho->altura;i++){
 		printf("Soma linha %d: %lld\n",i,soma[i]);
 	}
+
+	fclose(origem);
+	fclose(destino);
+
+	printf("%s\n",imagemFinal);
 
 	return 0;
 }
