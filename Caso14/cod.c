@@ -130,7 +130,7 @@ void showHeader(Header *cabecalho){
 	printf("Deslocamento, em bytes, para o inicio da area de dados: %d\n",cabecalho->BfOffSetBits);
 	printf("Tamanho em bytes do segundo cabecalho: %d\n",cabecalho->tamOutroCacabecalho);
 	printf("Resolucao: %d x %d\n",cabecalho->largura,cabecalho->altura);
-	printf("Numero  de planos: %d\n",cabecalho->numPlanos);
+	printf("Numero de planos: %d\n",cabecalho->numPlanos);
 	printf("Bits por pixel: %d\n",cabecalho->bytesPorPixel);
 	printf("Compressao usada: %d\n",cabecalho->compreensao); 
 	printf("Tamanho imagem: %d\n",cabecalho->BiSizeImag);
@@ -234,10 +234,10 @@ int main(){
     char *imagem;
 	char *imagemFinal;
 	long long int *soma;
+	int flag = 0;
 
     int **matriz;
-    int **novaMatriz;
-    int i,j,k,l;
+    int i,j,k;
 	int op;
     
     scanf("%m[^\n\r]",&imagem);
@@ -257,7 +257,10 @@ int main(){
 
 	cabecalho = readHeader(origem);
 
-	if(cabecalho->inicial[0]!='B' || cabecalho->inicial[1] != 'M'){
+	if(imagem[strlen(imagem)-1] != 'p' || imagem[strlen(imagem)-2] != 'm' || imagem[strlen(imagem)-3] != 'b' || imagem[strlen(imagem)-4] != '.')
+		flag = 1;
+
+	if(cabecalho->inicial[0]!='B' || cabecalho->inicial[1] != 'M' || flag == 1){
 		printf("Arquivo não é do formato BMP\n");
 		fclose(origem);
 		free(imagem);
@@ -276,7 +279,6 @@ int main(){
 	soma = (long long int *) calloc(cabecalho->altura,sizeof(long long int));
 
 	matriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
-	novaMatriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
 	
 	readPalheta(cores,origem);
 	
@@ -308,6 +310,7 @@ int main(){
 	destino = fopen(imagemFinal,"wb");
 
 	readData(origem,cabecalho,matriz,numPadding);
+	
 	//imprimeMatriz(matriz,cabecalho,numPadding);
 	writeHeader(destino,cabecalho);
 	
