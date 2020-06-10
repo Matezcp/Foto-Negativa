@@ -236,8 +236,7 @@ int main(){
 	long long int *soma;
 
     int **matriz;
-    int **novaMatriz;
-    int i,j,k,l;
+    int i,j,k;
 	int op;
     
     scanf("%m[^\n\r]",&imagem);
@@ -276,7 +275,6 @@ int main(){
 	soma = (long long int *) calloc(cabecalho->altura,sizeof(long long int));
 
 	matriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
-	novaMatriz = allocateMatrix(cabecalho->altura,cabecalho->largura);
 	
 	readPalheta(cores,origem);
 	
@@ -338,7 +336,7 @@ int main(){
 	fclose(origem);
 	fclose(destino);
 
-	printf("%s\n",imagemFinal);
+	printf("%s",imagemFinal);
 
 	return 0;
 }
